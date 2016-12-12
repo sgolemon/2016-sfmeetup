@@ -35,11 +35,30 @@ PHP_FUNCTION(hello_you) {
     php_printf("!\n");
 }
 
+PHP_FUNCTION(hello_everyone) {
+    zval *zarr, *name;
+    zend_bool greet = 1;
+    const char *salutation = "Hello";
+
+    if (zend_parse_parameters(ZEND_NUM_ARGS(),
+                              "a|b", &zarr, &greet) == FAILURE) {
+        return;
+    }
+
+    if (!greet) salutation = "Goodbye";
+    ZEND_HASH_FOREACH_VAL(Z_ARR_P(zarr), name)
+        if (Z_TYPE_P(name) == IS_STRING) {
+            php_printf("%s %s!\n", salutation, Z_STRVAL_P(name));
+        }
+    ZEND_HASH_FOREACH_END();
+}
+
 zend_function_entry hello_functions[] = {
     PHP_FE(hello_world, NULL)
     PHP_FE(hello_return, NULL)
     PHP_FE(hello_number, NULL)
     PHP_FE(hello_you, NULL)
+    PHP_FE(hello_everyone, NULL)
     PHP_FE_END
 };
 
