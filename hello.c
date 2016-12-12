@@ -18,6 +18,8 @@ typedef struct _phc_object {
     zend_object std; // Keep this last
 } phc_object;
 
+#define FETCH_CURLOBJ(zo) (((phc_object*)(zo + 1)) - 1)
+
 PHP_FUNCTION(hello_world) {
     php_printf("Hello World!\n");
 }
@@ -81,14 +83,43 @@ zend_function_entry hello_functions[] = {
     PHP_FE_END
 };
 
+size_t phc_write(char *ptr, size_t size, size_t nmemb, void *ctx) {
+    PHPWRITE(ptr, size * nmemb);
+}
+
 PHP_METHOD(HelloCurl, __construct) {
-    zval *this_ = getThis();
+    phc_object *phc = FETCH_CURLOBJ(Z_OBJ_P(getThis()));
+    zend_string *url = NULL;
 
+    if (zend_parse_parameters(ZEND_NUM_ARGS(), "|S!", &url) == FAILURE) {
+        return;
+    }
 
+    phc->handle = curl_easy_init();
+    curl_easy_setopt(phc->handle, CURLOPT_WRITEFUNCTION, phc_write);
+    if (url) {
+        curl_easy_setopt(phc->handle, CURLOPT_URL, ZSTR_VAL(url));
+    }
+}
+
+PHP_METHOD(HelloCurl, setUrl) {
+    zend_string *url;
+
+    if (zend_parse_parameters(ZEND_NUM_ARGS(), "S", &url) == FAILURE) {
+        return;
+    }
+
+    curl_easy_setopt(FETCH_CURLOBJ(Z_OBJ_P(getThis()))->handle, CURLOPT_URL, ZSTR_VAL(url));
+}
+
+PHP_METHOD(HelloCurl, perform)  {
+    curl_easy_perform(FETCH_CURLOBJ(Z_OBJ_P(getThis()))->handle);
 }
 
 zend_function_entry php_hello_curl_methods[] = {
     PHP_ME(HelloCurl, __construct, NULL, ZEND_ACC_PUBLIC | ZEND_ACC_CTOR)
+    PHP_ME(HelloCurl, setUrl, NULL, ZEND_ACC_PUBLIC)
+    PHP_ME(HelloCurl, perform, NULL, ZEND_ACC_PUBLIC)
     PHP_FE_END
 };
 
