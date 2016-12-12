@@ -53,12 +53,19 @@ PHP_FUNCTION(hello_everyone) {
     ZEND_HASH_FOREACH_END();
 }
 
+PHP_FUNCTION(hello_greetings) {
+    array_init(return_value);
+    add_next_index_string(return_value, "Hello");
+    add_index_string(return_value, 1, "Goodbye");
+}
+
 zend_function_entry hello_functions[] = {
     PHP_FE(hello_world, NULL)
     PHP_FE(hello_return, NULL)
     PHP_FE(hello_number, NULL)
     PHP_FE(hello_you, NULL)
     PHP_FE(hello_everyone, NULL)
+    PHP_FE(hello_greetings, NULL)
     PHP_FE_END
 };
 
