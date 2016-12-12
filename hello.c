@@ -10,8 +10,18 @@ PHP_FUNCTION(hello_world) {
     php_printf("Hello World!\n");
 }
 
+PHP_FUNCTION(hello_return) {
+    RETURN_STRING("Hello World!\n");
+}
+
+PHP_FUNCTION(hello_number) {
+    RETURN_LONG(42);
+}
+
 zend_function_entry hello_functions[] = {
     PHP_FE(hello_world, NULL)
+    PHP_FE(hello_return, NULL)
+    PHP_FE(hello_number, NULL)
     PHP_FE_END
 };
 
