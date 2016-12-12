@@ -11,6 +11,12 @@
 #endif
 
 zend_class_entry *php_hello_curl_ce;
+zend_object_handlers phc_handlers;
+
+typedef struct _phc_object {
+    CURL *handle;
+    zend_object std; // Keep this last
+} phc_object;
 
 PHP_FUNCTION(hello_world) {
     php_printf("Hello World!\n");
@@ -75,8 +81,6 @@ zend_function_entry hello_functions[] = {
     PHP_FE_END
 };
 
-zend_class_entry *php_hello_curl_ce;
-
 PHP_METHOD(HelloCurl, __construct) {
     zval *this_ = getThis();
 
@@ -88,10 +92,29 @@ zend_function_entry php_hello_curl_methods[] = {
     PHP_FE_END
 };
 
+zend_object *phc_create(zend_class_entry *ce) {
+    phc_object *ret = ecalloc(1, sizeof(phc_object) + zend_object_properties_size(ce));
+    zend_object *obj = &(ret->std);
+    zend_object_std_init(obj, ce);
+    obj->handlers = &phc_handlers;
+    object_properties_init(obj, ce);
+    return obj;
+}
+
+void phc_free(zend_object *obj) {
+    phc_object *phc = ((phc_object*)(obj + 1)) - 1;
+    if (phc->handle) curl_easy_cleanup(phc->handle);
+}
+
 PHP_MINIT_FUNCTION(hello) {
     zend_class_entry ce;
     INIT_CLASS_ENTRY(ce, "Hello\\cURL", php_hello_curl_methods);
     php_hello_curl_ce = zend_register_internal_class(&ce);
+    php_hello_curl_ce->create_object = phc_create;
+    memcpy(&phc_handlers, zend_get_std_object_handlers(), sizeof(zend_object_handlers));
+    phc_handlers.offset = XtOffsetOf(phc_object, std);
+    phc_handlers.dtor_obj = phc_free;
+    phc_handlers.clone_obj = NULL;
 
 #ifdef HAVE_CURL_EASY_H
     REGISTER_BOOL_CONSTANT("HELLO_CURL", 1, CONST_CS | CONST_PERSISTENT);
