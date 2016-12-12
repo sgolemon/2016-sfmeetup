@@ -10,6 +10,8 @@
 # include <curl/curl.h>
 #endif
 
+zend_class_entry *php_hello_curl_ce;
+
 PHP_FUNCTION(hello_world) {
     php_printf("Hello World!\n");
 }
@@ -73,7 +75,24 @@ zend_function_entry hello_functions[] = {
     PHP_FE_END
 };
 
+zend_class_entry *php_hello_curl_ce;
+
+PHP_METHOD(HelloCurl, __construct) {
+    zval *this_ = getThis();
+
+
+}
+
+zend_function_entry php_hello_curl_methods[] = {
+    PHP_ME(HelloCurl, __construct, NULL, ZEND_ACC_PUBLIC | ZEND_ACC_CTOR)
+    PHP_FE_END
+};
+
 PHP_MINIT_FUNCTION(hello) {
+    zend_class_entry ce;
+    INIT_CLASS_ENTRY(ce, "Hello\\cURL", php_hello_curl_methods);
+    php_hello_curl_ce = zend_register_internal_class(&ce);
+
 #ifdef HAVE_CURL_EASY_H
     REGISTER_BOOL_CONSTANT("HELLO_CURL", 1, CONST_CS | CONST_PERSISTENT);
     REGISTER_STRING_CONSTANT("HELLO_CURL_VERSION", curl_version(), CONST_CS | CONST_PERSISTENT);
