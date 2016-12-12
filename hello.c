@@ -6,6 +6,10 @@
 
 #include "php.h"
 
+#ifdef HAVE_CURL_EASY_H
+# include <curl/curl.h>
+#endif
+
 PHP_FUNCTION(hello_world) {
     php_printf("Hello World!\n");
 }
@@ -69,11 +73,23 @@ zend_function_entry hello_functions[] = {
     PHP_FE_END
 };
 
+PHP_MINIT_FUNCTION(hello) {
+#ifdef HAVE_CURL_EASY_H
+    REGISTER_BOOL_CONSTANT("HELLO_CURL", 1, CONST_CS | CONST_PERSISTENT);
+    REGISTER_STRING_CONSTANT("HELLO_CURL_VERSION", curl_version(), CONST_CS | CONST_PERSISTENT);
+#else
+    REGISTER_BOOL_CONSTANT("HELLO_CURL", 0, CONST_CS | CONST_PERSISTENT);
+#endif
+
+    return SUCCESS;
+}
+
 zend_module_entry hello_module_entry = {
     STANDARD_MODULE_HEADER,
     "hello",
     hello_functions,
-    NULL, NULL, NULL, NULL, NULL,
+    PHP_MINIT(hello),
+    NULL, NULL, NULL, NULL,
     NO_VERSION_YET,
     STANDARD_MODULE_PROPERTIES
 };
